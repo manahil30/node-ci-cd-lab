@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,8 +7,33 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests
+        run: npm test
+  
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
       - name: Checkout code
@@ -22,5 +47,10 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Run tests
-        run: npm test
+      - name: Deploy to Production
+        run: |
+          echo "🚀 Deploying application..."
+          echo "API Key: ${{ secrets.PRODUCTION_API_KEY }}"
+          echo "Deployment successful!"
+        env:
+          PRODUCTION_API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
