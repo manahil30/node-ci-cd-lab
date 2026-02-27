@@ -1,55 +1,39 @@
-name: CI/CD Pipeline
+name: Node Deployment
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [14.x, 16.x, 18.x]
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Install dependencies
         run: npm install
-      
+
       - name: Run tests
         run: npm test
-  
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          node-version: '16.x'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Deploy to Production
-        run: |
-          echo "🚀 Deploying application..."
-          echo "API Key: ${{ secrets.PRODUCTION_API_KEY }}"
-          echo "Deployment successful!"
-        env:
-          PRODUCTION_API_KEY: ${{ secrets.PRODUCTION_API_KEY }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to S3
+        if: github.ref == 'refs/heads/main'
+        run: aws s3 sync . s3://manahil-node-app-bucket
