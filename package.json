@@ -1,0 +1,13 @@
+{
+  "name": "node-ci-cd-lab",
+  "version": "1.0.0",
+  "description": "CI/CD Pipeline Lab Assignment",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js",
+    "start": "node index.js"
+  },
+  "keywords": ["ci-cd", "github-actions"],
+  "author": "Your Name",
+  "license": "MIT"
+}
